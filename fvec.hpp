@@ -2,48 +2,15 @@
 
 #include <cstdint>
 
-
-
-//typedef s32 fixed32;
-//typedef s16 fixed16;
-
-
-
-//static inline fixed32 fx_from_int(int d) {
-//    return d << FIX_SHIFT;
-//}
-
-// static inline fixed32 fx_from_float(float f) {
-//     return (fixed32)(f*FIX_SCALE);
-// }
-
-// static inline int fx_to_int(fixed32 fx) {
-//     return fx / FIX_SCALE;
-// }
-
-// static inline float fx_to_float(fixed32 fx) {
-//     return fx / FIX_SCALEF;
-// }
-
-// static inline fixed32 fx_multiply(fixed32 fa, fixed32 fb) {
-//     return (fa*fb)>>FIX_SHIFT;
-// }
-
-// static inline fixed32 fx_division(fixed32 fa, fixed32 fb) {
-//     return ((fa)*FIX_SCALE)/(fb);
-// }
-
-
-
 namespace fvec
 {
 
 
-class fixed32   //24.8
+class fixed32   //16.16
 {
-static constexpr int16_t FIX_SHIFT = 8;
-static constexpr int16_t FIX_SCALE = 256;
-static constexpr float FIX_SCALEF = 256.0f;
+static constexpr int32_t FIX_SHIFT = 16;
+static constexpr int32_t FIX_SCALE = 65536;
+static constexpr float FIX_SCALEF = 65536.0f;
 
 public:
     int32_t data;
@@ -52,21 +19,70 @@ public:
     fixed32(fixed32 const &that) = default;
     fixed32& operator = (fixed32 &that) = default;
 
-    fixed32(int16_t that)
+    explicit fixed32(int16_t that)
     {
-
+        data = that << FIX_SHIFT;
     }
 
+    explicit fixed32(float that)
+    {
+        data = (that*FIX_SCALE);
+    }
+
+    fixed32& operator = (int16_t that)
+    {
+        data = that << FIX_SHIFT;
+        return (*this);
+    }
+
+    fixed32& operator = (float that)
+    {
+        data = (that*FIX_SCALE);
+        return (*this);
+    }
 
     operator int32_t ()
     {
-        return
+        return data / FIX_SCALE;
+    }
+
+    operator int16_t ()
+    {
+        return data / FIX_SCALE;
+    }
+
+    fixed32 operator + (fixed32 that)
+    {
+        fixed32 r;
+        r.data = data + that.data;
+        return r;
+    }
+
+    fixed32 operator - (fixed32 that)
+    {
+        fixed32 r;
+        r.data = data - that.data;
+        return r;
+    }
+
+    fixed32 operator * (fixed32 that)
+    {
+        fixed32 r;
+        r.data = (int64_t(data) * that.data) >> FIX_SHIFT;
+        return r;
+    }
+
+    fixed32 operator / (fixed32 that)
+    {
+        fixed32 r;
+        r.data = (int64_t(data) * FIX_SCALE) / (that.data);
+        return r;
     }
 
 
 };
 
-template<class TYPE,  void (*PIXEL_FUNCTION)(short,short)>
+template<class TYPE,  void (*PIXEL_FUNCTION)(int16_t,int16_t, uint8_t, uint8_t, uint8_t)>
 class Renderer
 {
 public:
@@ -74,7 +90,7 @@ public:
 
     Renderer()
     {
-        PIXEL_FUNCTION(1,2);
+        PIXEL_FUNCTION(1,2,0,0,0);
     }
 
 
