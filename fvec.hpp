@@ -2,15 +2,11 @@
 
 #include <cstdint>
 
-namespace fvec
-{
-
-
 class fixed32   //16.16
 {
-static constexpr int32_t FIX_SHIFT = 16;
-static constexpr int32_t FIX_SCALE = 65536;
-static constexpr float FIX_SCALEF = 65536.0f;
+    static constexpr int32_t FIX_SHIFT = 16;
+    static constexpr int32_t FIX_SCALE = 65536;
+    static constexpr float FIX_SCALEF = 65536.0f;
 
 public:
     int32_t data;
@@ -81,6 +77,39 @@ public:
 
 
 };
+
+template<class T>
+class vec2
+{
+public:
+    T x,y;
+
+    vec2 operator + (vec2 const & that)
+    {
+        return {x+that.x, y+that.y};
+    }
+
+    vec2 operator - (vec2 const & that)
+    {
+        return {x-that.x, y-that.y};
+    }
+
+    vec2 operator * (T const & that)
+    {
+        return {x*that,y*that};
+    }
+
+    vec2 operator / (T const & that)
+    {
+        return {x/that,y/that};
+    }
+};
+
+namespace fvec
+{
+
+
+
 
 template<class TYPE,  void (*PIXEL_FUNCTION)(int16_t,int16_t, uint8_t, uint8_t, uint8_t)>
 class Renderer
