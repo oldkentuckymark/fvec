@@ -133,11 +133,10 @@ constexpr auto makeTable() -> std::array<T, S>
 }
 
 
-template<class T>
 class vec2
 {
 public:
-    T x,y;
+    fixed32 x,y;
 
     constexpr auto operator + (vec2 const & that) const -> vec2
     {
@@ -149,22 +148,29 @@ public:
         return {x-that.x, y-that.y};
     }
 
-    constexpr auto operator * (T const & that) const -> vec2
+    constexpr auto operator * (fixed32 const & that) const -> vec2
     {
         return {x*that,y*that};
     }
 
-    constexpr auto operator / (T const & that) const -> vec2
+    constexpr auto operator / (fixed32 const & that) const -> vec2
     {
         return {x/that,y/that};
     }
+
+    [[nodiscard]] constexpr auto length() const -> fixed32
+    {
+        const auto x2 = x*x;
+        const auto y2 = y*y;
+        const auto sum = x2+y2;
+        return sqrt(sum);
+    }
 };
 
-template<class T>
-class vec3 : public vec2<T>
+class vec3 : public vec2
 {
 public:
-    T z;
+    fixed32 z;
 
     constexpr auto operator + (vec3 const & that) -> vec3
     {
@@ -176,21 +182,18 @@ public:
         return {this->x-that.x, this->y-that.y, z-that.x};
     }
 
-    constexpr auto operator * (T const & that) -> vec3
+    constexpr auto operator * (fixed32 const & that) -> vec3
     {
         return {this->x*that,this->y*that,this->z*that};
     }
 
-    constexpr auto operator / (T const & that) -> vec3
+    constexpr auto operator / (fixed32 const & that) -> vec3
     {
         return {this->x/that,this->y/that,this->z/that};
     }
 };
 
 
-
-template<class TYPE,
-         auto PIXEL_FUNC>
 class Renderer
 {
 public:
@@ -204,18 +207,43 @@ public:
     {
     }
 
-    ~Renderer()
+    virtual ~Renderer()
     {
 
     }
 
-    void plot(uint16_t x, uint16_t y, uint16_t c)
+    void setVertexFunction(vec3 (*func)(vec3))
     {
-        PIXEL_FUNC(x,y,c);
+        vertex_function_ = func;
     }
+
+
+    void setVertexPointer()
+    {
+
+    }
+
+
+
+    virtual void clear()
+    {
+
+    }
+
+    virtual void present()
+    {
+
+    }
+
+    virtual void plot(uint16_t x, uint16_t y, uint16_t c)
+    {
+
+    }
+
+
 
 private:
-
+    vec3 (*vertex_function_)(vec3){};
 
 
     /*
@@ -263,7 +291,44 @@ def Render(p, phi, height, horizon, scale_height, distance, screen_width, screen
 # scaling factor for the height, the largest distance,
 # screen width and the screen height parameter
 Render( Point(0, 0), 0, 50, 120, 120, 300, 800, 600 )
-     */
+
+void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1)
+{
+    int16_t dx = std::abs(x1 - x0);
+    int16_t dy = std::abs(y1 - y0);
+    int16_t sx = (x0 < x1) ? 1 : -1;
+    int16_t sy = (y0 < y1) ? 1 : -1;
+    int16_t err = dx - dy;
+
+    while (true)
+    {
+        plot(x0, y0);
+
+        if (x0 == x1 && y0 == y1)
+        {
+            break;
+        }
+
+        int16_t e2 = 2 * err;
+
+        if (e2 > -dy)
+        {
+            err -= dy;
+            x0 += sx;
+        }
+
+        if (e2 < dx)
+        {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
+
+
+
+*/
 
 };
 
