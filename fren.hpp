@@ -253,6 +253,21 @@ class mat4
 {
 public:
     fixed32 m[4][4];
+
+    constexpr auto operator + (mat4 const & that) -> mat4
+    {
+        mat4 n;
+
+        for(uint8_t c = 0; c < 4; ++c)
+        {
+            for(uint8_t r = 0; r < 4; ++r)
+            {
+                n.m[c][r] = this->m[c][r] + that.m[c][r];
+            }
+        }
+
+        return n;
+    }
 };
 
 
