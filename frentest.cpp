@@ -1,21 +1,21 @@
-#include "fvec.hpp"
+#include "fren.hpp"
 #include <SDL2/SDL.h>
 
 
-class SDLDRAWER : public fvec::Renderer
+class SDLDRAWER : public fren::Context
 {
     SDL_Window* win{};
     SDL_Renderer* ren{};
 public:
     SDLDRAWER()
     {
-        SDL_CreateWindowAndRenderer(1200*2,800*2,0,&win,&ren);
+        SDL_CreateWindowAndRenderer(1200*1,800*1,0,&win,&ren);
         SDL_RenderSetLogicalSize(ren, 240, 160);
     }
 
     auto plot(uint16_t x, uint16_t y, uint16_t c) -> void override
     {
-        auto col = fvec::Convert555to888(c);
+        auto col = fren::Convert555to888(c);
         SDL_SetRenderDrawColor(ren,col[0],col[1],col[2],col[3]);
         SDL_RenderDrawPoint(ren,x,y);
     }
@@ -69,13 +69,13 @@ auto main(int argc, char *argv[]) -> int
 
         }
 
-        const auto sintable = fvec::makeTable< int,30,std::sinf >;
+        const auto sintable = fren::makeTable< int,30,std::sinf >;
 
 
         r.clear();
 
-        r.plot(0,0,fvec::Convert888to555(255,0,0));
-        r.plot(1,0,fvec::Convert888to555(255,255,255));
+        r.plot(0,0,fren::Convert888to555(255,0,0));
+        r.plot(1,0,fren::Convert888to555(255,255,255));
         r.plot(2,0,UINT16_MAX);
 
 

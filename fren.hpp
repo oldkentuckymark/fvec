@@ -4,7 +4,7 @@
 #include <array>
 #include <cmath>
 
-namespace fvec
+namespace fren
 {
 
 
@@ -191,23 +191,87 @@ public:
     {
         return {this->x/that,this->y/that,this->z/that};
     }
+
+    constexpr auto operator * (vec3 const & that) -> fixed32
+    {
+        return { (this->x*that.x) + (this->y*that.y) + (this->z*that.z) };
+    }
+
+    [[nodiscard]] constexpr auto length() const -> fixed32
+    {
+        const auto x2 = x*x;
+        const auto y2 = y*y;
+        const auto z2 = z*z;
+        const auto sum = x2+y2+z2;
+        return sqrt(sum);
+    }
+};
+
+class vec4 : public vec3
+{
+public:
+    fixed32 w;
+
+    constexpr auto operator + (vec4 const & that) -> vec4
+    {
+        return {this->x+that.x, this->y+that.y, z+that.x, w+that.w};
+    }
+
+    constexpr auto operator - (vec4 const & that) -> vec4
+    {
+        return {this->x-that.x, this->y-that.y, z-that.x, w-that.w};
+    }
+
+    constexpr auto operator * (fixed32 const & that) -> vec4
+    {
+        return {this->x*that,this->y*that,this->z*that,w*that};
+    }
+
+    constexpr auto operator / (fixed32 const & that) -> vec4
+    {
+        return {this->x/that,this->y/that,this->z/that,w/that};
+    }
+
+    constexpr auto operator * (vec4 const & that) -> fixed32
+    {
+        return { (this->x*that.x) + (this->y*that.y) + (this->z*that.z) + (this->w*that.w) };
+    }
+
+    [[nodiscard]] constexpr auto length() const -> fixed32
+    {
+        const auto x2 = x*x;
+        const auto y2 = y*y;
+        const auto z2 = z*z;
+        const auto w2 = w*w;
+        const auto sum = x2+y2+z2+w2;
+        return sqrt(sum);
+    }
+
+};
+
+class mat4
+{
+public:
+    fixed32 m[4][4];
 };
 
 
-class Renderer
+class Context
 {
 public:
-    //Renderer() = delete;
-    Renderer(Renderer&) = delete;
-    Renderer(Renderer&&) = delete;
-    auto operator = (Renderer&) -> Renderer& = delete;
-    auto operator = (Renderer&&) -> Renderer& = delete;
 
-    Renderer()
+
+    //Context() = delete;
+    Context(Context&) = delete;
+    Context(Context&&) = delete;
+    auto operator = (Context&) -> Context& = delete;
+    auto operator = (Context&&) -> Context& = delete;
+
+    Context()
     {
     }
 
-    virtual ~Renderer()
+    virtual ~Context()
     {
 
     }
@@ -217,8 +281,17 @@ public:
         vertex_function_ = func;
     }
 
+    void setVertexPointer(uint8_t size, uint8_t stride, fixed32* pointer)
+    {
 
-    void setVertexPointer()
+    }
+
+    void SetColorPointer(uint8_t stride, uint16_t* pointer)
+    {
+
+    }
+
+    void setIndexPointer(uint8_t* pointer)
     {
 
     }
@@ -244,6 +317,12 @@ public:
 
 private:
     vec3 (*vertex_function_)(vec3){};
+
+    fixed32* vertex_pointer_{};
+
+    uint16_t* color_pointer_{};
+
+    uint8_t* index_pointer_{};
 
 
     /*

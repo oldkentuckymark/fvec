@@ -9,8 +9,8 @@ set(LICENCES
 )
 
 add_executable(fvectest
-	fvectest.cpp
-	fvec.hpp
+	frentest.cpp
+	fren.hpp
 )
 
 if(WIN32)
