@@ -2,27 +2,42 @@
 #include <SDL2/SDL.h>
 
 
-auto pix(short,short) -> void
+class SDLDRAWER
 {
-    return;
-}
+    SDL_Window* win;
+    SDL_Renderer* ren;
+public:
+    SDLDRAWER()
+    {
+        SDL_CreateWindowAndRenderer(1200*2,800*2,0,&win,&ren);
+        SDL_RenderSetLogicalSize(ren, 240, 160);
+    }
+
+    auto operator () (uint16_t x, uint16_t y, uint16_t c) -> void
+    {
+
+    }
+};
+
+
 
 
 
 auto main(int argc, char *argv[]) -> int
 {
+
     SDL_Init(SDL_INIT_VIDEO);
-    SDL_Window* win;
-    SDL_Renderer* ren;
-    SDL_CreateWindowAndRenderer(1200,800,0,&win,&ren);
-    SDL_RenderSetLogicalSize(ren, 240, 160);
 
 
-    fvec::fixed32 a{int16_t(100)};
-    fvec::fixed32 b{int16_t(100)};
 
-    auto c = (a/b);
+    auto plot = [&](uint16_t x, uint16_t y, uint16_t c) -> void
+    {
+        auto col = fvec::Convert555to888(c);
+        SDL_SetRenderDrawColor(ren, col[0], col[1], col[2], 255);
+        SDL_RenderDrawPoint(ren,x,y);
+    };
 
+    fvec::Renderer<fvec::fixed32, plot> r(plot);
 
     bool running = true;
     while (running)
@@ -49,19 +64,20 @@ auto main(int argc, char *argv[]) -> int
         {
 
         }
+
+        const auto sintable = fvec::makeTable< int,30,std::sinf >;
+
         SDL_SetRenderDrawColor(ren,0,0,0,255);
         SDL_RenderClear(ren);
 
-
-        SDL_SetRenderDrawColor(ren,255,0,0,255);
-        SDL_RenderDrawLine(ren,0,0,a,b);
-
+        r.plot(0,0,fvec::Convert888to555(255,0,0));
+        r.plot(1,0,fvec::Convert888to555(255,255,255));
+        r.plot(2,0,UINT16_MAX);
 
 
 
 
         SDL_RenderPresent(ren);
-
 
     }
 
