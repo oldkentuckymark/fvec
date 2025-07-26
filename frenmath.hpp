@@ -25,10 +25,15 @@ public:
 
     }
 
-    //constexpr explicit fixed32(float const that) : data(that*FIX_SCALE)
-    //{
-    //
-    //}
+    constexpr explicit fixed32(uint16_t that) : data(that << FIX_SHIFT)
+    {
+
+    }
+
+    constexpr explicit fixed32(float const that) : data(that*FIX_SCALE)
+    {
+
+    }
 
     constexpr auto operator = (int16_t const that) -> fixed32&
     {

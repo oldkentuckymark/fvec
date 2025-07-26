@@ -79,23 +79,18 @@ public:
 
     }
 
-    void setResolution(uint16_t width, uint16_t height)
-    {
-        xres = width;
-        yres = height;
-    }
-
     void setVertexFunction(VertexFunction* vf)
     {
         vertex_function = vf;
     }
-    void setViewPort(const uint32_t x, const uint32_t y)
+
+    void setViewPort(const uint16_t x, const uint16_t y)
     {
         xres = x;
         yres = y;
     }
 
-    void VertexPointer(const uint32_t size, void* pointer)
+    void VertexPointer(const uint8_t size, void* pointer)
     {
         vertex_pointer = pointer;
         vertex_size = size;
@@ -124,6 +119,7 @@ public:
         if(vertex_size == 2)
         {
             fren::math::vec2* vp = reinterpret_cast<fren::math::vec2*>(vertex_pointer);
+            auto ggg = vp[0].y;
             for(uint32_t i = first ;i < count; ++i)
             {
                 work_buff.push_back( Vertex{ {vp[i].x, vp[i].y,0.0_fx,1.0_fx}, UINT16_MAX } );
@@ -159,7 +155,7 @@ public:
         vertex_pipeline();
     }
 
-    void DrawElements(DrawType drawtype, const uint32_t count)
+    void DrawElements(DrawType const drawtype, uint32_t const count)
     {
         if (!index_pointer || !vertex_pointer)
         {
@@ -231,7 +227,7 @@ protected:
     std::vector<Vertex> work_buff;
 
 
-    std::vector<Vertex> convert_to_lines(const std::vector<Vertex>& in, DrawType dt)
+    std::vector<Vertex> convert_to_lines(std::vector<Vertex>& in, DrawType dt)
     {
         std::vector<Vertex> out;
 
@@ -280,7 +276,7 @@ protected:
         run_draw_function(draw_buff);
     }
 
-    std::vector<Vertex> run_vertex_function(const std::vector<Vertex>& in)
+    std::vector<Vertex> run_vertex_function(std::vector<Vertex>& in)
     {
         std::vector<Vertex> out;
         for (auto& i : in)
@@ -289,7 +285,7 @@ protected:
         }
         return out;
     }
-    std::vector<Vertex> run_clip_function(const std::vector<Vertex>& in)
+    std::vector<Vertex> run_clip_function(std::vector<Vertex>& in)
     {
         std::vector<Vertex> out;
 
@@ -323,7 +319,7 @@ protected:
 
         return  out;
     }
-    std::vector<Vertex> run_ndc_function(const std::vector<Vertex>& in)
+    std::vector<Vertex> run_ndc_function(std::vector<Vertex>& in)
     {
         std::vector<Vertex> out;
         for (auto& i : in)
@@ -332,7 +328,7 @@ protected:
         }
         return out;
     }
-    std::vector<Vertex> run_windowtransform_function(const std::vector<Vertex>& in)
+    std::vector<Vertex> run_windowtransform_function(std::vector<Vertex>& in)
     {
         std::vector<Vertex> out;
         for (auto& i : in)
@@ -342,7 +338,7 @@ protected:
                     Vertex
                     {
                         {
-                     ((static_cast<math::fixed32>(xres) / 2.0_fx) * i.pos.x) + (static_cast<math::fixed32>(xres) / 2.0_fx),
+                     ((math::fixed32(xres) / 2.0_fx) * i.pos.x) + (static_cast<math::fixed32>(xres) / 2.0_fx),
                             -((static_cast<math::fixed32>(yres) / 2.0_fx) * i.pos.y) + (static_cast<math::fixed32>(yres) / 2.0_fx),
                             ((1.0_fx / 2.0_fx) * i.pos.z) + (1.0_fx / 2.0_fx),
                             i.pos.w
@@ -354,7 +350,7 @@ protected:
         return out;
     }
 
-    void run_draw_function(const std::vector<Vertex>& in)
+    void run_draw_function(std::vector<Vertex>& in)
     {
         if(in.empty())
         {

@@ -2,6 +2,13 @@
 #include <SDL2/SDL.h>
 
 
+constexpr fren::math::fixed32 operator""_fx(long double f)
+{
+    fren::math::fixed32 r(static_cast<float>(f));
+    return r;
+}
+
+
 class SDLDRAWER : public fren::Context
 {
     SDL_Window* win{};
@@ -9,7 +16,7 @@ class SDLDRAWER : public fren::Context
 public:
     SDLDRAWER()
     {
-        SDL_CreateWindowAndRenderer(1200*1,800*1,0,&win,&ren);
+        SDL_CreateWindowAndRenderer(1200*2,800*2,0,&win,&ren);
         SDL_RenderSetLogicalSize(ren, 240, 160);
     }
 
@@ -17,7 +24,16 @@ public:
     {
         auto col = fren::Convert555to888(c);
         SDL_SetRenderDrawColor(ren,col[0],col[1],col[2],col[3]);
+        //SDL_SetRenderDrawColor(ren,255,0,0,255);
         SDL_RenderDrawPoint(ren,x,y);
+    }
+
+    auto virtual line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color) -> void override
+    {
+        auto col = fren::Convert555to888(color);
+        SDL_SetRenderDrawColor(ren,col[0],col[1],col[2],col[3]);
+        SDL_RenderDrawLine(ren, x1,y1,x2,y2);
+
     }
 
     auto clear() -> void override
@@ -32,6 +48,37 @@ public:
     }
 };
 
+class VertexShader : public fren::VertexFunction
+{
+public:
+    VertexShader()
+    {
+        //mv = glm::mat4(1.0f);
+        //pj = glm::ortho(0.0f,1.0f,1.0f,0.0f);
+        //pj = glm::perspective(45.0f, 1.0f, 0.2f, 1000.0f);
+
+    }
+
+    fren::math::vec4 operator() (const fren::math::vec4& in) override
+    {
+        //return pj * mv * in;
+        return in;
+    }
+
+    //glm::mat4 mv, pj;
+};
+
+
+
+fren::math::fixed32 par[6] =
+{
+    0.25_fx,0.25_fx, 0.25_fx,0.5_fx, 0.5_fx,0.5_fx
+};
+
+uint16_t car[6] =
+{
+    UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX
+};
 
 
 
@@ -39,9 +86,15 @@ public:
 auto main(int argc, char *argv[]) -> int
 {
 
+    auto ggg = par[0];
+
     SDL_Init(SDL_INIT_VIDEO);
 
+    VertexShader vs;
+
     SDLDRAWER r;
+    r.setViewPort(240,160);
+    r.setVertexFunction(&vs);
 
     bool running = true;
     while (running)
@@ -74,10 +127,10 @@ auto main(int argc, char *argv[]) -> int
 
         r.clear();
 
-        r.plot(0,0,fren::Convert888to555(255,0,0));
-        r.plot(1,0,fren::Convert888to555(255,255,255));
-        r.plot(2,0,UINT16_MAX);
+        r.VertexPointer(2, par);
+        r.ColorPointer(car);
 
+        r.DrawArray(fren::DrawType::Points, 0, 3);
 
         r.present();
 
