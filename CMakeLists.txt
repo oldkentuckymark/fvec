@@ -11,6 +11,7 @@ set(LICENCES
 add_executable(fvectest
 	frentest.cpp
 	fren.hpp
+	frenmath.hpp
 )
 
 if(WIN32)

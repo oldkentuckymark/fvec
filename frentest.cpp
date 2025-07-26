@@ -13,7 +13,7 @@ public:
         SDL_RenderSetLogicalSize(ren, 240, 160);
     }
 
-    auto plot(uint16_t x, uint16_t y, uint16_t c) -> void override
+    auto virtual plot(uint16_t x, uint16_t y, uint16_t c) -> void override
     {
         auto col = fren::Convert555to888(c);
         SDL_SetRenderDrawColor(ren,col[0],col[1],col[2],col[3]);
@@ -69,7 +69,7 @@ auto main(int argc, char *argv[]) -> int
 
         }
 
-        const auto sintable = fren::makeTable< int,30,std::sinf >;
+        const auto sintable = fren::math::makeTable< int,30,std::sinf >;
 
 
         r.clear();

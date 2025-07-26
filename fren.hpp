@@ -3,10 +3,19 @@
 #include <cstdint>
 #include <array>
 #include <cmath>
+#include <vector>
+#include <climits>
+
+#include "frenmath.hpp"
 
 namespace fren
 {
 
+constexpr math::fixed32 operator""_fx(long double f)
+{
+    math::fixed32 r(static_cast<float>(f));
+    return r;
+}
 
 constexpr auto Convert888to555(uint8_t const r, uint8_t const g, uint8_t const b) -> uint16_t
 {
@@ -25,319 +34,418 @@ constexpr auto Convert555to888(uint16_t color) -> std::array<uint8_t, 4>
     return {red,green,blue,alpha};
 }
 
-class fixed32   //16.16
+enum class DrawType
 {
-    static constexpr int32_t FIX_SHIFT = 16;
-    static constexpr int32_t FIX_SCALE = 65536;
-    static constexpr float FIX_SCALEF = 65536.0f;
-
-public:
-    int32_t data;
-
-    constexpr fixed32() = default;
-    constexpr fixed32(fixed32 const &that) = default;
-    constexpr auto operator = (fixed32 const &that) -> fixed32& = default;
-
-    constexpr explicit fixed32(int16_t that) : data(that << FIX_SHIFT)
-    {
-
-    }
-
-    constexpr explicit fixed32(float const that) : data(that*FIX_SCALE)
-    {
-
-    }
-
-    constexpr auto operator = (int16_t const that) -> fixed32&
-    {
-        data = that << FIX_SHIFT;
-        return (*this);
-    }
-
-    constexpr auto operator = (float const that) -> fixed32&
-    {
-        data = (that*FIX_SCALE);
-        return (*this);
-    }
-
-    constexpr operator int32_t () const
-    {
-        return data / FIX_SCALE;
-    }
-
-    constexpr operator int16_t () const
-    {
-        return data / FIX_SCALE;
-    }
-
-    constexpr operator float () const
-    {
-        return data / FIX_SCALEF;
-    }
-
-    constexpr auto operator + (fixed32 const that) const -> fixed32
-    {
-        fixed32 r;
-        r.data = data + that.data;
-        return r;
-    }
-
-    constexpr auto operator - (fixed32 const that) const -> fixed32
-    {
-        fixed32 r;
-        r.data = data - that.data;
-        return r;
-    }
-
-    constexpr auto operator * (fixed32 const that) const -> fixed32
-    {
-        fixed32 r;
-        r.data = (int64_t(data) * that.data) >> FIX_SHIFT;
-        return r;
-    }
-
-    constexpr auto operator / (fixed32 const that) const -> fixed32
-    {
-        fixed32 r;
-        r.data = (int64_t(data) * FIX_SCALE) / (that.data);
-        return r;
-    }
-
-
+    Points,
+    Lines,
+    Line_Strip,
+    Line_Loop
 };
 
-constexpr auto sqrt(fixed32 const n) -> fixed32
-{
-    return static_cast<fixed32>(std::sqrtf(static_cast<float>(n)));
-}
-
-constexpr auto sin(fixed32 const n) -> fixed32
-{
-    return static_cast<fixed32>(std::sinf(static_cast<float>(n)));
-}
-
-constexpr auto cos(fixed32 const n) -> fixed32
-{
-    return static_cast<fixed32>(std::cosf(static_cast<float>(n)));
-}
-
-template<class T, std::size_t S, auto FUNC>
-constexpr auto makeTable() -> std::array<T, S>
-{
-    std::array<T,S> r{};
-    for(std::size_t i = 0; i < S; ++i)
-    {
-        r[i] = FUNC(i);
-    }
-    return r;
-}
-
-
-class vec2
+class VertexFunction
 {
 public:
-    fixed32 x,y;
-
-    constexpr auto operator + (vec2 const & that) const -> vec2
-    {
-        return {x+that.x, y+that.y};
-    }
-
-    constexpr auto operator - (vec2 const & that) const -> vec2
-    {
-        return {x-that.x, y-that.y};
-    }
-
-    constexpr auto operator * (fixed32 const & that) const -> vec2
-    {
-        return {x*that,y*that};
-    }
-
-    constexpr auto operator / (fixed32 const & that) const -> vec2
-    {
-        return {x/that,y/that};
-    }
-
-    [[nodiscard]] constexpr auto length() const -> fixed32
-    {
-        const auto x2 = x*x;
-        const auto y2 = y*y;
-        const auto sum = x2+y2;
-        return sqrt(sum);
-    }
-};
-
-class vec3 : public vec2
-{
-public:
-    fixed32 z;
-
-    constexpr auto operator + (vec3 const & that) -> vec3
-    {
-        return {this->x+that.x, this->y+that.y, z+that.x};
-    }
-
-    constexpr auto operator - (vec3 const & that) -> vec3
-    {
-        return {this->x-that.x, this->y-that.y, z-that.x};
-    }
-
-    constexpr auto operator * (fixed32 const & that) -> vec3
-    {
-        return {this->x*that,this->y*that,this->z*that};
-    }
-
-    constexpr auto operator / (fixed32 const & that) -> vec3
-    {
-        return {this->x/that,this->y/that,this->z/that};
-    }
-
-    constexpr auto operator * (vec3 const & that) -> fixed32
-    {
-        return { (this->x*that.x) + (this->y*that.y) + (this->z*that.z) };
-    }
-
-    [[nodiscard]] constexpr auto length() const -> fixed32
-    {
-        const auto x2 = x*x;
-        const auto y2 = y*y;
-        const auto z2 = z*z;
-        const auto sum = x2+y2+z2;
-        return sqrt(sum);
-    }
-};
-
-class vec4 : public vec3
-{
-public:
-    fixed32 w;
-
-    constexpr auto operator + (vec4 const & that) -> vec4
-    {
-        return {this->x+that.x, this->y+that.y, z+that.x, w+that.w};
-    }
-
-    constexpr auto operator - (vec4 const & that) -> vec4
-    {
-        return {this->x-that.x, this->y-that.y, z-that.x, w-that.w};
-    }
-
-    constexpr auto operator * (fixed32 const & that) -> vec4
-    {
-        return {this->x*that,this->y*that,this->z*that,w*that};
-    }
-
-    constexpr auto operator / (fixed32 const & that) -> vec4
-    {
-        return {this->x/that,this->y/that,this->z/that,w/that};
-    }
-
-    constexpr auto operator * (vec4 const & that) -> fixed32
-    {
-        return { (this->x*that.x) + (this->y*that.y) + (this->z*that.z) + (this->w*that.w) };
-    }
-
-    [[nodiscard]] constexpr auto length() const -> fixed32
-    {
-        const auto x2 = x*x;
-        const auto y2 = y*y;
-        const auto z2 = z*z;
-        const auto w2 = w*w;
-        const auto sum = x2+y2+z2+w2;
-        return sqrt(sum);
-    }
-
-};
-
-class mat4
-{
-public:
-    fixed32 m[4][4];
-
-    constexpr auto operator + (mat4 const & that) -> mat4
-    {
-        mat4 n;
-
-        for(uint8_t c = 0; c < 4; ++c)
-        {
-            for(uint8_t r = 0; r < 4; ++r)
-            {
-                n.m[c][r] = this->m[c][r] + that.m[c][r];
-            }
-        }
-
-        return n;
-    }
+    VertexFunction() {}
+    virtual ~VertexFunction() {}
+    virtual fren::math::vec4 operator()(const fren::math::vec4& in) = 0;
 };
 
 
+//color of line is primitive by color of first vertex
 class Context
 {
 public:
 
+    virtual void plot(uint16_t x, uint16_t y, uint16_t color) {};
+    virtual void line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color) {}
+    virtual void lineHorizontal(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t color) {}
+    virtual void lineVertical(uint16_t x1, uint16_t y1, uint16_t y2, uint16_t color) {}
+    virtual void clear() {}
+    virtual void present() {}
 
-    //Context() = delete;
-    Context(Context&) = delete;
-    Context(Context&&) = delete;
-    auto operator = (Context&) -> Context& = delete;
-    auto operator = (Context&&) -> Context& = delete;
 
     Context()
     {
-    }
+        vertex_pointer = nullptr;
+        color_pointer = nullptr;
+        index_pointer = nullptr;
+        vertex_function = nullptr;
 
+        xres = 0;
+        yres = 0;
+    }
     virtual ~Context()
     {
 
     }
 
-    void setVertexFunction(vec3 (*func)(vec3))
+    void setResolution(uint16_t width, uint16_t height)
     {
-        vertex_function_ = func;
+        xres = width;
+        yres = height;
     }
 
-    void setVertexPointer(uint8_t size, uint8_t stride, fixed32* pointer)
+    void setVertexFunction(VertexFunction* vf)
     {
-
+        vertex_function = vf;
+    }
+    void setViewPort(const uint32_t x, const uint32_t y)
+    {
+        xres = x;
+        yres = y;
     }
 
-    void SetColorPointer(uint8_t stride, uint16_t* pointer)
+    void VertexPointer(const uint32_t size, void* pointer)
     {
-
+        vertex_pointer = pointer;
+        vertex_size = size;
+    }
+    void ColorPointer(uint16_t* pointer)
+    {
+        color_pointer = pointer;
+    }
+    void IndexPointer(uint8_t* pointer)
+    {
+        index_pointer = pointer;
     }
 
-    void setIndexPointer(uint8_t* pointer)
+    void DrawArray(DrawType drawtype, const uint32_t first, const uint32_t count)
     {
+        if (!vertex_pointer)
+        {
+            return;
+        }
 
+        draw_type = drawtype;
+
+        //gather pos into buffer
+        work_buff.clear();
+
+        if(vertex_size == 2)
+        {
+            fren::math::vec2* vp = reinterpret_cast<fren::math::vec2*>(vertex_pointer);
+            for(uint32_t i = first ;i < count; ++i)
+            {
+                work_buff.push_back( Vertex{ {vp[i].x, vp[i].y,0.0_fx,1.0_fx}, UINT16_MAX } );
+            }
+        }
+        else if(vertex_size == 3)
+        {
+            fren::math::vec3* vp = reinterpret_cast<fren::math::vec3*>(vertex_pointer);
+            for(uint32_t i = first ;i < count; ++i)
+            {
+                work_buff.push_back( Vertex{ {vp[i].x, vp[i].y,vp[i].z,1.0_fx}, UINT16_MAX } );
+            }
+        }
+        else if(vertex_size == 4)
+        {
+            fren::math::vec4* vp = reinterpret_cast<fren::math::vec4*>(vertex_pointer);
+            for(uint32_t i = first ;i < count; ++i)
+            {
+                work_buff.push_back( Vertex{ vp[i], UINT16_MAX } );
+            }
+        }
+
+        //gather col into buffer
+        if(color_pointer)
+        {
+            uint16_t* cp = color_pointer;
+            for(uint32_t i = first; i < count; ++i)
+            {
+                work_buff[i].col = cp[i];
+            }
+        }
+
+        vertex_pipeline();
+    }
+
+    void DrawElements(DrawType drawtype, const uint32_t count)
+    {
+        if (!index_pointer || !vertex_pointer)
+        {
+            return;
+        }
+
+        draw_type = drawtype;
+
+        //gather pos into buffer
+        work_buff.clear();
+
+        if(vertex_size == 2)
+        {
+            fren::math::vec2* vp = reinterpret_cast<fren::math::vec2*>(vertex_pointer);
+            for(uint32_t i = 0 ;i < count; ++i)
+            {
+                work_buff.push_back( Vertex{ {vp[index_pointer[i]].x,vp[index_pointer[i]].y, 0.0_fx, 1.0_fx} , UINT16_MAX } );
+            }
+        }
+        else if(vertex_size == 3)
+        {
+            fren::math::vec3* vp = reinterpret_cast<fren::math::vec3*>(vertex_pointer);
+            for(uint32_t i = 0 ;i < count; ++i)
+            {
+                work_buff.push_back( Vertex{ {vp[index_pointer[i]].x, vp[index_pointer[i]].y, vp[index_pointer[i]].z, 1.0_fx} , UINT16_MAX } );
+            }
+        }
+        else if(vertex_size == 4)
+        {
+            fren::math::vec4* vp = reinterpret_cast<fren::math::vec4*>(vertex_pointer);
+            for(uint32_t i = 0 ;i < count; ++i)
+            {
+                work_buff.push_back( Vertex{ {vp[index_pointer[i]]} , UINT16_MAX } );
+            }
+        }
+
+        //gather col into buffer
+        if(color_pointer)
+        {
+            uint16_t* cp = color_pointer;
+            for(uint32_t i = 0; i < count; ++i)
+            {
+                work_buff[i].col = cp[index_pointer[i]];
+            }
+        }
+
+        vertex_pipeline();
+    }
+
+    struct Vertex
+    {
+        fren::math::vec4 pos;
+        uint16_t col;
+    };
+
+protected:
+
+    uint16_t xres, yres;
+    void* vertex_pointer;
+    uint16_t* color_pointer;
+    uint8_t* index_pointer;
+
+    uint8_t vertex_size;
+
+    DrawType draw_type;
+
+    VertexFunction* vertex_function;
+
+    std::vector<Vertex> work_buff;
+
+
+    std::vector<Vertex> convert_to_lines(const std::vector<Vertex>& in, DrawType dt)
+    {
+        std::vector<Vertex> out;
+
+        if(dt == DrawType::Points)
+        {
+            for(uint8_t i = 0; i  <in.size(); ++i)
+            {
+                out.push_back(in[i]);
+                out.push_back(in[i]);
+            }
+        }
+        else if(dt == DrawType::Lines)
+        {
+            out = in;
+        }
+        else if(dt == DrawType::Line_Strip)
+        {
+            for(uint8_t i = 0; i < in.size() - 1; ++i)
+            {
+                out.push_back( in[i] );
+                out.push_back( in[i + 1] );
+            }
+        }
+        else if (dt == DrawType::Line_Loop)
+        {
+            for(uint8_t i = 0; i < in.size() - 1; ++i)
+            {
+                out.push_back( in[i] );
+                out.push_back( in[i + 1] );
+            }
+            out.push_back(in[in.size() - 1]);
+            out.push_back(in[0]);
+        }
+
+        return out;
     }
 
 
-
-    virtual void clear()
+    void vertex_pipeline()
     {
-
+        std::vector<Vertex> clip_buff = run_vertex_function(work_buff);
+        std::vector<Vertex> line_buff = convert_to_lines(clip_buff, draw_type);
+        std::vector<Vertex> ndc_buff = run_clip_function(line_buff);
+        std::vector<Vertex> wt_buff = run_ndc_function(ndc_buff);
+        std::vector<Vertex> draw_buff = run_windowtransform_function(wt_buff);
+        run_draw_function(draw_buff);
     }
 
-    virtual void present()
+    std::vector<Vertex> run_vertex_function(const std::vector<Vertex>& in)
     {
+        std::vector<Vertex> out;
+        for (auto& i : in)
+        {
+            out.push_back(  Vertex{ vertex_function[0](i.pos) , i.col }  );
+        }
+        return out;
+    }
+    std::vector<Vertex> run_clip_function(const std::vector<Vertex>& in)
+    {
+        std::vector<Vertex> out;
 
+        for(uint8_t i = 0; i < in.size() - 1; i = i + 2)
+        {
+            Vertex pi1, pi2, po1, po2;
+            pi1 = in[i];
+            pi2 = in[i+1];
+            bool pi1in = clip_point(pi1);
+            bool pi2in = clip_point(pi2);
+            if(pi1in && pi2in)
+            {
+                out.push_back(pi1);
+                out.push_back(pi2);
+            }
+            else if(pi1in || pi2in)
+            {
+                clip_line_component(pi1,pi2, 0, 1.0_fx, po1, po2);
+                clip_line_component(po1,po2, 0, -1.0_fx, pi1, pi2);
+                clip_line_component(pi1,pi2, 1, 1.0_fx, po1, po2);
+                clip_line_component(po1,po2, 1, -1.0_fx, pi1, pi2);
+                clip_line_component(pi1,pi2, 2, 1.0_fx, po1, po2);
+                clip_line_component(po1,po2, 2, -1.0_fx, pi1, pi2);
+
+                out.push_back( pi1 );
+                out.push_back( pi2 );
+            }
+
+
+        }
+
+        return  out;
+    }
+    std::vector<Vertex> run_ndc_function(const std::vector<Vertex>& in)
+    {
+        std::vector<Vertex> out;
+        for (auto& i : in)
+        {
+            out.push_back( Vertex{ { i.pos / i.pos.w }, i.col });
+        }
+        return out;
+    }
+    std::vector<Vertex> run_windowtransform_function(const std::vector<Vertex>& in)
+    {
+        std::vector<Vertex> out;
+        for (auto& i : in)
+        {
+            out.push_back
+                (
+                    Vertex
+                    {
+                        {
+                     ((static_cast<math::fixed32>(xres) / 2.0_fx) * i.pos.x) + (static_cast<math::fixed32>(xres) / 2.0_fx),
+                            -((static_cast<math::fixed32>(yres) / 2.0_fx) * i.pos.y) + (static_cast<math::fixed32>(yres) / 2.0_fx),
+                            ((1.0_fx / 2.0_fx) * i.pos.z) + (1.0_fx / 2.0_fx),
+                            i.pos.w
+                        },
+                        i.col
+                    }
+                    );
+        }
+        return out;
     }
 
-    virtual void plot(uint16_t x, uint16_t y, uint16_t c)
+    void run_draw_function(const std::vector<Vertex>& in)
     {
+        if(in.empty())
+        {
+            return;
+        }
 
+        for(uint32_t i = 0; i < in.size() - 1; i = i + 2)
+        {
+
+
+            //laserOff();
+            //laserMove(in[i].pos.x, in[i].pos.y);
+            //laserOn();
+            //laserColor(in[i].col.r, in[i].col.g, in[i].col.b);
+
+            line(static_cast<int16_t>(in[i].pos.x),
+                 static_cast<int16_t>(in[i].pos.y),
+                 static_cast<int16_t>(in[i+1].pos.x),
+                 static_cast<int16_t>(in[i+1].pos.y),
+                 in[i].col);
+
+
+            //laserMove(in[i+1].pos.x, in[i+1].pos.y);
+            //laserColor(in[i+1].col.r, in[i+1].col.g, in[i].col.b);
+        }
+        //laserOff();
+    }
+
+    // returns true if point is inside volume
+    bool clip_point(const Vertex& in)
+    {
+        if ((in.pos.x < -in.pos.w ||
+             in.pos.x > in.pos.w ||
+             in.pos.y < -in.pos.w ||
+             in.pos.y > in.pos.w ||
+             in.pos.z < -in.pos.w ||
+             in.pos.z > in.pos.w))
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    void clip_line_component(const Vertex& q1, const Vertex& q2,
+                             const uint8_t index, const math::fixed32 factor,
+                             Vertex& q1new, Vertex& q2new)
+    {
+        q1new = q1;
+        q2new = q2;
+
+        Vertex previousVertex = q2;
+        math::fixed32 previousComponent = previousVertex.pos[index] * factor;
+        bool previousInside = previousComponent <= previousVertex.pos.w;
+
+        Vertex currentVertex = q1;
+        math::fixed32 currentComponent = currentVertex.pos[index] * factor;
+        bool currentInside = currentComponent <= currentVertex.pos.w;
+
+        if((currentInside) && (!previousInside))
+        {
+            math::fixed32 lerpAmount = (previousVertex.pos.w - previousComponent) /
+                               ((previousVertex.pos.w - previousComponent) -
+                                (currentVertex.pos.w - currentComponent));
+            q2new.pos = fren::math::mix(previousVertex.pos, currentVertex.pos, lerpAmount);
+
+            //fren::math::vec3 p2v3 = fren::math::mix(fren::math::vec3(previousVertex.pos), fren::math::vec3(currentVertex.pos), lerpAmount);
+            //q2new.pos = fren::math::vec4(p2v3, previousVertex.pos.w);
+
+            return;
+
+        }
+        else if((!currentInside) && (previousInside))
+        {
+            math::fixed32 lerpAmount = (currentVertex.pos.w - currentComponent) /
+                               ((currentVertex.pos.w - currentComponent) -
+                                (previousVertex.pos.w - previousComponent));
+            q1new.pos = fren::math::mix(currentVertex.pos, previousVertex.pos, lerpAmount);
+            return;
+        }
+        return;
     }
 
 
+};
 
-private:
-    vec3 (*vertex_function_)(vec3){};
 
-    fixed32* vertex_pointer_{};
 
-    uint16_t* color_pointer_{};
 
-    uint8_t* index_pointer_{};
 
 
     /*
@@ -423,9 +531,5 @@ void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 
 
 */
-
-};
-
-
 
 }
