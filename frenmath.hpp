@@ -275,7 +275,7 @@ public:
     }
 };
 
-constexpr math::fixed32 operator""_fx(long double f)
+consteval math::fixed32 operator""_fx(long double f)
 {
     math::fixed32 r(static_cast<float>(f));
     return r;
@@ -291,4 +291,9 @@ constexpr fixed32 PI = 3.14159265_fx;
 
 }
 
+consteval fren::math::fixed32 operator""_fx(long double f)
+{
+    fren::math::fixed32 r(static_cast<float>(f));
+    return r;
+}
 

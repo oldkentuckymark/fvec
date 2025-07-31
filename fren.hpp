@@ -11,12 +11,6 @@
 namespace fren
 {
 
-constexpr math::fixed32 operator""_fx(long double f)
-{
-    math::fixed32 r(static_cast<float>(f));
-    return r;
-}
-
 constexpr auto Convert888to555(uint8_t const r, uint8_t const g, uint8_t const b) -> uint16_t
 {
     return (((r >> 3) & 31) |
@@ -57,9 +51,11 @@ class Context
 public:
 
     virtual void plot(uint16_t x, uint16_t y, uint16_t color) {};
+
     virtual void line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color) {}
     virtual void lineHorizontal(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t color) {}
     virtual void lineVertical(uint16_t x1, uint16_t y1, uint16_t y2, uint16_t color) {}
+
     virtual void clear() {}
     virtual void present() {}
 

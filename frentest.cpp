@@ -2,13 +2,6 @@
 #include <SDL2/SDL.h>
 
 
-constexpr fren::math::fixed32 operator""_fx(long double f)
-{
-    fren::math::fixed32 r(static_cast<float>(f));
-    return r;
-}
-
-
 class SDLDRAWER : public fren::Context
 {
     SDL_Window* win{};
@@ -86,8 +79,6 @@ uint16_t car[6] =
 auto main(int argc, char *argv[]) -> int
 {
 
-    auto ggg = par[0];
-
     SDL_Init(SDL_INIT_VIDEO);
 
     VertexShader vs;
@@ -130,7 +121,7 @@ auto main(int argc, char *argv[]) -> int
         r.VertexPointer(2, par);
         r.ColorPointer(car);
 
-        r.DrawArray(fren::DrawType::Points, 0, 3);
+        r.DrawArray(fren::DrawType::Line_Loop, 0, 3);
 
         r.present();
 
